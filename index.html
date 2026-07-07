@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>국기·나라·수도 매칭 퀴즈</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Gothic A1", "함초롱돋움", "Hamchorom Dotum", "Malgun Gothic", sans-serif;
+      background: linear-gradient(160deg, #fff9e6 0%, #e3f2fd 100%);
+      color: #1a1a2e;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+               max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+      font-size: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* 헤더 */
+    .header-card {
+      background: #fff;
+      border: 3px solid #1a1a2e;
+      border-left: 6px solid #ff9800;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .share-tip {
+      font-size: 0.875rem;
+      color: #1565c0;
+      background: #e3f2fd;
+      padding: 0.5rem 0.65rem;
+      margin-bottom: 0.85rem;
+      line-height: 1.45;
+      border-left: 3px solid #1565c0;
+    }
+
+    .header-card h1 {
+      font-size: clamp(1.25rem, 4vw, 1.45rem);
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: #1565c0;
+    }
+
+    .header-card p {
+      font-size: 1rem;
+      color: #444;
+    }
+
+    /* 퀴즈 카드 */
+    .quiz-card {
+      background: #fff;
+      border: 3px solid #1a1a2e;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .quiz-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1rem;
+      background: #1565c0;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    #progress {
+      background: #ff9800;
+      color: #1a1a2e;
+      padding: 0.35rem 0.65rem;
+      white-space: nowrap;
+    }
+
+    #score {
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .quiz-content {
+      padding: 1.15rem;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .quiz-content.fade-out {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .quiz-content.fade-in {
+      animation: slideIn 0.4s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .quiz-content,
+      .choice-btn,
+      .next-btn,
+      .action-btn {
+        transition: none;
+        animation: none;
+      }
+    }
+
+    .quiz-body {
+      text-align: center;
+      padding: 0.75rem 0 1.35rem;
+      border-bottom: 2px dashed #e0e0e0;
+      margin-bottom: 1.15rem;
+    }
+
+    .question-flag {
+      font-size: clamp(3.5rem, 12vw, 4.75rem);
+      line-height: 1;
+      margin-bottom: 0.65rem;
+    }
+
+    .question-hint {
+      font-size: clamp(1.15rem, 3.5vw, 1.35rem);
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: #1565c0;
+    }
+
+    .question-prompt {
+      color: #555;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    /* 보기 2×2 그리드 */
+    .choices {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .choice-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3.25rem;
+      padding: 0.85rem 0.5rem;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.35;
+      word-break: keep-all;
+      color: #1a1a2e;
+      background: #fff;
+      border: 2px solid #1a1a2e;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .choice-btn:hover:not(:disabled),
+    .choice-btn:focus-visible:not(:disabled) {
+      transform: scale(1.03);
+      background: #e3f2fd;
+      border-color: #1565c0;
+      outline: 3px solid #1565c0;
+      outline-offset: 2px;
+    }
+
+    .choice-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .choice-btn:disabled {
+      cursor: default;
+    }
+
+    .choice-btn.correct {
+      background: #2e7d32;
+      border-color: #1b5e20;
+      color: #fff;
+    }
+
+    .choice-btn.wrong {
+      background: #c62828;
+      border-color: #b71c1c;
+      color: #fff;
+    }
+
+    .choice-btn.reveal-correct {
+      background: #2e7d32;
+      border-color: #1b5e20;
+      color: #fff;
+    }
+
+    .feedback {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      min-height: 1.5rem;
+      margin: 1rem 0 0.5rem;
+      line-height: 1.45;
+    }
+
+    .feedback.correct {
+      color: #2e7d32;
+    }
+
+    .feedback.wrong {
+      color: #c62828;
+    }
+
+    .next-btn {
+      display: none;
+      width: 100%;
+      min-height: 3rem;
+      margin-top: 0.5rem;
+      padding: 0.9rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: #1565c0;
+      border: 2px solid #1a1a2e;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .next-btn.visible {
+      display: block;
+    }
+
+    .next-btn:hover,
+    .next-btn:focus-visible {
+      transform: scale(1.02);
+      background: #0d47a1;
+      outline: 3px solid #0d47a1;
+      outline-offset: 2px;
+    }
+
+    .next-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 결과 화면 */
+    .result-message {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .result-message h2 {
+      font-size: clamp(1.25rem, 4vw, 1.45rem);
+      color: #1565c0;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-score {
+      font-size: clamp(1.75rem, 6vw, 2.25rem);
+      font-weight: 700;
+      color: #ff9800;
+      margin: 0.75rem 0;
+    }
+
+    .result-detail {
+      font-size: 1rem;
+      color: #555;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      align-items: stretch;
+    }
+
+    .action-btn {
+      min-height: 3rem;
+      padding: 0.85rem 1.25rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      border: 2px solid #1a1a2e;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .action-btn:hover,
+    .action-btn:focus-visible {
+      transform: scale(1.02);
+      outline: 3px solid #1565c0;
+      outline-offset: 2px;
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .retry-btn {
+      color: #fff;
+      background: #ff9800;
+    }
+
+    .retry-wrong-btn {
+      color: #1a1a2e;
+      background: #fff;
+    }
+
+    /* 태블릿 */
+    @media (min-width: 600px) {
+      .container {
+        max-width: 560px;
+      }
+
+      .quiz-content {
+        padding: 1.5rem;
+      }
+
+      .choices {
+        gap: 0.85rem;
+      }
+
+      .choice-btn {
+        min-height: 3.5rem;
+        padding: 1rem 0.75rem;
+      }
+    }
+
+    /* 작은 모바일 */
+    @media (max-width: 360px) {
+      body {
+        padding: 0.75rem;
+      }
+
+      .header-card {
+        padding: 1rem 1.15rem;
+      }
+
+      .choices {
+        gap: 0.65rem;
+      }
+
+      .choice-btn {
+        min-height: 3rem;
+        font-size: 0.9375rem;
+        padding: 0.75rem 0.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="header-card">
+      <p class="share-tip">학생과 공유: 이 HTML 파일을 메일·클래스룸·카톡으로 보내거나, 파일을 더블클릭해 브라우저에서 열면 됩니다.</p>
+      <h1>국기·나라·수도 매칭 퀴즈</h1>
+      <p>국기와 나라 이름을 보고 수도를 맞춰 보세요!</p>
+    </header>
+
+    <section class="quiz-card" aria-label="퀴즈">
+      <div class="quiz-top">
+        <span id="progress">문제 1/5</span>
+        <span id="score">점수 0</span>
+      </div>
+
+      <div class="quiz-content" id="quiz-content">
+        <div class="quiz-body" id="question-area"></div>
+
+        <div class="choices" id="choices-area" aria-label="보기">
+          <button type="button" class="choice-btn" data-index="0"></button>
+          <button type="button" class="choice-btn" data-index="1"></button>
+          <button type="button" class="choice-btn" data-index="2"></button>
+          <button type="button" class="choice-btn" data-index="3"></button>
+        </div>
+
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+        <button type="button" class="next-btn" id="next-btn">다음 문제</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        flag: "🇰🇷",
+        countryHint: "한국",
+        answer: "서울",
+        wrong: ["도쿄", "베이징", "방콕"]
+      },
+      {
+        flag: "🇯🇵",
+        countryHint: "일본",
+        answer: "도쿄",
+        wrong: ["서울", "오사카", "교토"]
+      },
+      {
+        flag: "🇫🇷",
+        countryHint: "프랑스",
+        answer: "파리",
+        wrong: ["런던", "베를린", "마드리드"]
+      },
+      {
+        flag: "🇧🇷",
+        countryHint: "브라질",
+        answer: "브라질리아",
+        wrong: ["상파울루", "리우데자네이루", "부에노스아이레스"]
+      },
+      {
+        flag: "🇪🇬",
+        countryHint: "이집트",
+        answer: "카이로",
+        wrong: ["알렉산드리아", "트리폴리", "카르툼"]
+      }
+    ];
+
+    let activeQuiz = [...quizData];
+    let wrongQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isLocked = false;
+    let currentAnswer = "";
+    let isRetryMode = false;
+
+    const quizContent = document.getElementById("quiz-content");
+    const progressEl = document.getElementById("progress");
+    const scoreEl = document.getElementById("score");
+
+    function getQuestionArea() {
+      return document.getElementById("question-area");
+    }
+
+    function getChoicesArea() {
+      return document.getElementById("choices-area");
+    }
+
+    function getFeedbackEl() {
+      return document.getElementById("feedback");
+    }
+
+    function getNextBtn() {
+      return document.getElementById("next-btn");
+    }
+
+    function shuffle(array) {
+      const list = [...array];
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+      return list;
+    }
+
+    function updateStatus() {
+      progressEl.textContent = `문제 ${currentIndex + 1}/${activeQuiz.length}`;
+      scoreEl.textContent = `점수 ${score}`;
+    }
+
+    function getChoiceButtons() {
+      return getChoicesArea().querySelectorAll(".choice-btn");
+    }
+
+    function hideNextButton() {
+      const nextBtn = getNextBtn();
+      nextBtn.classList.remove("visible");
+      nextBtn.textContent =
+        currentIndex < activeQuiz.length - 1 ? "다음 문제" : "결과 보기";
+    }
+
+    function showQuestion(index) {
+      const question = activeQuiz[index];
+      currentAnswer = question.answer;
+      isLocked = false;
+
+      getQuestionArea().innerHTML = `
+        <div class="question-flag" aria-hidden="true">${question.flag}</div>
+        <p class="question-hint">${question.countryHint}</p>
+        <p class="question-prompt">이 나라의 수도는 어디일까요?</p>
+      `;
+
+      const choices = shuffle([question.answer, ...question.wrong]);
+      const buttons = getChoiceButtons();
+
+      buttons.forEach((btn, i) => {
+        btn.textContent = choices[i];
+        btn.disabled = false;
+        btn.classList.remove("correct", "wrong", "reveal-correct");
+      });
+
+      const feedback = getFeedbackEl();
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      hideNextButton();
+      updateStatus();
+    }
+
+    function addWrongQuestion(question) {
+      const alreadyAdded = wrongQuestions.some(
+        q => q.countryHint === question.countryHint
+      );
+      if (!alreadyAdded) {
+        wrongQuestions.push({ ...question });
+      }
+    }
+
+    function getResultMessage() {
+      const total = activeQuiz.length;
+      const percent = Math.round((score / total) * 100);
+      let comment = "다음에 더 잘해 볼 수 있어요!";
+      if (percent === 100) comment = "완벽해요! 훌륭합니다!";
+      else if (percent >= 80) comment = "아주 잘했어요!";
+      else if (percent >= 60) comment = "꽤 잘했어요!";
+
+      return { total, percent, comment };
+    }
+
+    function showResult() {
+      const { total, percent, comment } = getResultMessage();
+      const modeLabel = isRetryMode ? " (틀린 문제 복습)" : "";
+      const wrongBtnHtml = wrongQuestions.length > 0
+        ? `<button type="button" class="action-btn retry-wrong-btn" id="retry-wrong-btn">틀린 문제 다시 풀기 (${wrongQuestions.length}문제)</button>`
+        : "";
+
+      quizContent.innerHTML = `
+        <div class="result-message">
+          <h2>퀴즈 완료!${modeLabel}</h2>
+          <p class="result-score">${score} / ${total}</p>
+          <p class="result-detail">정답률 ${percent}% · ${comment}</p>
+          <div class="result-actions">
+            ${wrongBtnHtml}
+            <button type="button" class="action-btn retry-btn" id="retry-btn">처음부터 다시 풀기</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("retry-btn").addEventListener("click", restartQuiz);
+
+      const retryWrongBtn = document.getElementById("retry-wrong-btn");
+      if (retryWrongBtn) {
+        retryWrongBtn.addEventListener("click", retryWrongQuiz);
+      }
+    }
+
+    function buildQuizMarkup() {
+      return `
+        <div class="quiz-body" id="question-area"></div>
+        <div class="choices" id="choices-area" aria-label="보기">
+          <button type="button" class="choice-btn" data-index="0"></button>
+          <button type="button" class="choice-btn" data-index="1"></button>
+          <button type="button" class="choice-btn" data-index="2"></button>
+          <button type="button" class="choice-btn" data-index="3"></button>
+        </div>
+        <p class="feedback" id="feedback" aria-live="polite"></p>
+        <button type="button" class="next-btn" id="next-btn">다음 문제</button>
+      `;
+    }
+
+    function startQuiz(questions, retryMode) {
+      activeQuiz = [...questions];
+      isRetryMode = retryMode;
+      currentIndex = 0;
+      score = 0;
+      wrongQuestions = [];
+
+      quizContent.innerHTML = buildQuizMarkup();
+      bindEvents();
+      showQuestion(currentIndex);
+      quizContent.classList.add("fade-in");
+      setTimeout(() => quizContent.classList.remove("fade-in"), 400);
+    }
+
+    function restartQuiz() {
+      startQuiz(quizData, false);
+    }
+
+    function retryWrongQuiz() {
+      const toRetry = [...wrongQuestions];
+      startQuiz(toRetry, true);
+    }
+
+    function goToNextQuestion() {
+      currentIndex++;
+
+      if (currentIndex >= activeQuiz.length) {
+        quizContent.classList.add("fade-out");
+        setTimeout(showResult, 350);
+        return;
+      }
+
+      quizContent.classList.add("fade-out");
+
+      setTimeout(() => {
+        showQuestion(currentIndex);
+        quizContent.classList.remove("fade-out");
+        quizContent.classList.add("fade-in");
+        setTimeout(() => quizContent.classList.remove("fade-in"), 400);
+      }, 350);
+    }
+
+    function handleChoiceClick(event) {
+      if (isLocked) return;
+
+      const btn = event.currentTarget;
+      const selected = btn.textContent;
+      const currentQuestion = activeQuiz[currentIndex];
+      isLocked = true;
+
+      const buttons = getChoiceButtons();
+      buttons.forEach(b => b.disabled = true);
+
+      const feedback = getFeedbackEl();
+
+      if (selected === currentAnswer) {
+        btn.classList.add("correct");
+        score++;
+        scoreEl.textContent = `점수 ${score}`;
+        feedback.textContent = "정답이에요!";
+        feedback.className = "feedback correct";
+      } else {
+        btn.classList.add("wrong");
+        buttons.forEach(b => {
+          if (b.textContent === currentAnswer) {
+            b.classList.add("reveal-correct");
+          }
+        });
+        feedback.textContent = `틀렸어요. 정답은 ${currentAnswer}입니다.`;
+        feedback.className = "feedback wrong";
+        addWrongQuestion(currentQuestion);
+      }
+
+      const nextBtn = getNextBtn();
+      nextBtn.textContent =
+        currentIndex < activeQuiz.length - 1 ? "다음 문제" : "결과 보기";
+      nextBtn.classList.add("visible");
+    }
+
+    function bindEvents() {
+      getChoiceButtons().forEach(btn => {
+        btn.addEventListener("click", handleChoiceClick);
+      });
+      getNextBtn().addEventListener("click", goToNextQuestion);
+    }
+
+    bindEvents();
+    showQuestion(currentIndex);
+  </script>
+</body>
+</html>
